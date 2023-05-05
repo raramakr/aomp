@@ -43,11 +43,11 @@ export OPENCL_DIR=$AOMP_REPOS/ROCm-OpenCL-Runtime
 [[ ! -d $OPENCL_DIR ]] && echo "ERROR:  Missing $OPENCL_DIR" && exit 1
 
 export HSA_PATH=$AOMP_INSTALL_DIR
-export HIP_PATH=$AOMP_INSTALL_DIR
 export ROCM_PATH=$AOMP_INSTALL_DIR
 export HIP_CLANG_PATH=$AOMP_INSTALL_DIR/bin
 export DEVICE_LIB_PATH=$AOMP_INSTALL_DIR/lib
 
+HIP_PATH=$AOMP_INSTALL_DIR
 BUILD_DIR=${BUILD_AOMP}
 BUILDTYPE="Release"
 
@@ -86,13 +86,19 @@ if [ "$1" != "nocmake" ] && [ "$1" != "install" ] ; then
   export ROCM_RPATH="$AOMP_ORIGIN_RPATH_LIST"
   MYCMAKEOPTS="$AOMP_ORIGIN_RPATH -DCMAKE_BUILD_TYPE=$BUILDTYPE \
  -DCMAKE_PREFIX_PATH=$AOMP_INSTALL_DIR \
- -DCMAKE_CXX_FLAGS=-I$AOMP/include/amd_comgr \
  -DCMAKE_INSTALL_PREFIX=$AOMP_INSTALL_DIR \
  -DCMAKE_INSTALL_LIBDIR=lib \
  -DHIP_COMMON_DIR=$HIP_DIR \
  -DAMD_OPENCL_PATH=$OPENCL_DIR \
  -DROCCLR_PATH=$ROCclr_DIR \
  -DROCM_PATH=$ROCM_PATH"
+
+  # Enable HIPAMD Sanitizer Build
+  if [ "$AOMP_BUILD_SANITIZER" == 'ON' ]; then
+    MYCMAKEOPTS="$MYCMAKEOPTS -DCMAKE_CXX_FLAGS=-I$SANITIZER_COMGR_INCLUDE_PATH ${SANITIZER_FLAGS} -DCMAKE_C_FLAGS=${SANITIZER_FLAGS}"
+  else
+    MYCMAKEOPTS="$MYCMAKEOPTS -DCMAKE_CXX_FLAGS=-I$AOMP_include/amd_comgr -DCMAKE_CXX_FLAGS=-Wno-error=deprecated-declarations -DCMAKE_C_FLAGS=-Wno-error=deprecated-declarations"
+  fi
 
   # If this machine does not have an actvie amd GPU, tell hipamd
   # to use first in GFXLIST or gfx90a if no GFXLIST

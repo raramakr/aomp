@@ -67,6 +67,9 @@ int main() {
     for (int offset = BlockDim_x / 2; offset > 0; offset /= 2) {
       if (ThreadIdx_x < offset)
         tb_sum[ThreadIdx_x] += tb_sum[ThreadIdx_x + offset];
+      #if defined(__AMDGCN__) || defined(__NVPTX__)
+      __kmpc_impl_syncthreads();
+      #endif
     }
 
     // Atomically reduce each teams sum to a single value.
